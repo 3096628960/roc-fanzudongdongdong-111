@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>连连看小游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f5f5f5;
+            padding-top: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .game-container {
+            display: grid;
+            grid-template-columns: repeat(4, 80px);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .card {
+            width: 80px;
+            height: 80px;
+            background-color: #42b983;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .card.open {
+            background-color: #2c3e50;
+        }
+        .card.match {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        #restart {
+            margin-top: 20px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #42b983;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #restart:hover {
+            background-color: #359469;
+        }
+    </style>
+</head>
+<body>
+    <h1>连连看小游戏</h1>
+    <div class="game-container" id="gameContainer"></div>
+    <button id="restart">重新开始</button>
+
+    <script>
+        // 游戏配置
+        const cardTypes = ['🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓'];
+        const gridSize = 4; // 4x4 网格
+        let cards = [];
+        let firstCard = null;
+        let secondCard = null;
+        let lockBoard = false;
+
+        // 初始化游戏
+        function initGame() {
+            const gameContainer = document.getElementById('gameContainer');
+            gameContainer.innerHTML = '';
+            firstCard = null;
+            secondCard = null;
+            lockBoard = false;
+
+            // 生成卡片对并打乱顺序
+            cards = [...cardTypes, ...cardTypes]
+                .sort(() => Math.random() - 0.5)
+                .slice(0, gridSize * gridSize);
+
+            // 创建卡片元素
+            cards.forEach((type, index) => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.type = type;
+                card.dataset.index = index;
+                card.addEventListener('click', flipCard);
+                gameContainer.appendChild(card);
+            });
+        }
+
+        // 翻转卡片
+        function flipCard() {
+            if (lockBoard) return;
+            const currentCard = this;
+
+            // 防止点击同一张卡片
+            if (currentCard === firstCard) return;
+
+            currentCard.classList.add('open');
+            currentCard.textContent = currentCard.dataset.type;
+
+            if (!firstCard) {
+                firstCard = currentCard;
+                return;
+            }
+
+            secondCard = currentCard;
+            lockBoard = true;
+            checkForMatch();
+        }
+
+        // 检查是否匹配
+        function checkForMatch() {
+            const isMatch = firstCard.dataset.type === secondCard.dataset.type;
+            isMatch ? disableCards() : unflipCards();
+        }
+
+        // 匹配成功 - 禁用卡片
+        function disableCards() {
+            firstCard.classList.add('match');
+            secondCard.classList.add('match');
+            firstCard.removeEventListener('click', flipCard);
+            secondCard.removeEventListener('click', flipCard);
+            resetBoard();
+        }
+
+        // 匹配失败 - 翻转回去
+        function unflipCards() {
+            setTimeout(() => {
+                firstCard.classList.remove('open');
+                secondCard.classList.remove('open');
+                firstCard.textContent = '';
+                secondCard.textContent = '';
+                resetBoard();
+            }, 800);
+        }
+
+        // 重置棋盘状态
+        function resetBoard() {
+            [firstCard, secondCard, lockBoard] = [null, null, false];
+        }
+
+        // 重新开始按钮
+        document.getElementById('restart').addEventListener('click', initGame);
+
+        // 页面加载时初始化游戏
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
